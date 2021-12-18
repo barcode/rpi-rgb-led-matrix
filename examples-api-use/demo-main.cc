@@ -850,6 +850,194 @@ private:
   int t_;
 };
 
+class FadingNumberGenerator : public DemoRunner {
+public:
+  FadingNumberGenerator(Canvas *m, int delay_ms=50)
+    : DemoRunner(m),
+      delay_ms_(delay_ms)
+  {}
+
+  ~FadingNumberGenerator() {}
+
+  void Run() override {
+    const int width  = canvas()->width();
+    const int height = canvas()->height();
+    uint8_t on  = 255;
+    uint8_t off = 0;
+
+    // Start the loop
+    while (!interrupt_received) {
+      int num = 0;
+      for(int x = 0; x < width / 8; ++x)
+      {
+          for(int y = 0; y < height / 8; ++y, ++num)
+          {
+              int8_t a = num > 9 ? (num/10)%10 : -1;
+              int8_t b = num%10;
+              drawNumber(x * 8, y * 8, a, b, on, off);
+          }
+      }
+      //sum is always 255
+      --on;
+      ++off;
+      usleep(delay_ms_ * 1000);
+    }
+  }
+
+private:
+  void drawNumber(int offx, int offy, int8_t a, int8_t b, uint8_t on, uint8_t off) {
+    // AAA-BBB-  A = pixel of number A
+    // AAA-BBB-  B = pixel of number B
+    // AAA-BBB-  - = pixel off
+    // AAA-BBB-  + = pixel on
+    // AAA-BBB-
+    // --------
+    // ++++++++
+    // --------
+    drawOneNumber(offx, offy, a, on, off);
+    drawOneNumber(offx+4, offy, b, on, off);
+    //lines at bottom
+    for(int i = 0; i < 8; ++i)
+    {
+        canvas()->SetPixel(offx + i, offy + 5, off,  off,  off);
+        canvas()->SetPixel(offx + i, offy + 6, on,   on,   on);
+        canvas()->SetPixel(offx + i, offy + 7, off,  off,  off);
+    }
+    //lines after numbers
+    for(int i = 0; i < 5; ++i)
+    {
+        canvas()->SetPixel(offx + 3, offy + i, off,  off,  off);
+        canvas()->SetPixel(offx + 7, offy + i, off,  off,  off);
+    }
+  }
+  void drawOneNumber(int offx, int offy, int8_t n, uint8_t h, uint8_t l) {
+    //|  #|###|###|  #|###|###|###|###|###|###|
+    //| ##|  #|  #| # |#  |#  |# #|# #|# #|# #|
+    //|# #|###|###|#  |###|###|  #|###|###|# #|
+    //|  #|#  |  #|###|  #|# #|  #|# #|  #|# #|
+    //|  #|###|###| # |###|###|  #|###|###|###|
+    // ' ' = off (l) # = on (h)
+    // n = -1 -> all off
+    switch(n)
+    {
+    case 0 :
+        drawNumberPixels(offx, offy,
+                         h, h, h,
+                         h, l, h,
+                         h, l, h,
+                         h, l, h,
+                         h, h, h);
+    break;
+    case 1 :
+        drawNumberPixels(offx, offy,
+                         l, l, h,
+                         l, h, h,
+                         h, l, h,
+                         l, l, h,
+                         l, l, h);
+    break;
+    case 2 :
+        drawNumberPixels(offx, offy,
+                         h, h, h,
+                         l, l, h,
+                         h, h, h,
+                         h, l, l,
+                         h, h, h);
+    break;
+    case 3 :
+        drawNumberPixels(offx, offy,
+                         h, h, h,
+                         l, l, h,
+                         h, h, h,
+                         l, l, h,
+                         h, h, h);
+    break;
+    case 4 :
+        drawNumberPixels(offx, offy,
+                         l, l, h,
+                         l, h, l,
+                         h, l, l,
+                         h, h, h,
+                         l, h, l);
+    break;
+    case 5 :
+        drawNumberPixels(offx, offy,
+                         h, h, h,
+                         h, l, l,
+                         h, h, h,
+                         l, l, h,
+                         h, h, h);
+    break;
+    case 6 :
+        drawNumberPixels(offx, offy,
+                         h, h, h,
+                         h, l, l,
+                         h, h, h,
+                         h, l, h,
+                         h, h, h);
+    break;
+    case 7 :
+        drawNumberPixels(offx, offy,
+                         h, h, h,
+                         h, l, h,
+                         l, l, h,
+                         l, l, h,
+                         l, l, h);
+    break;
+    case 8 :
+        drawNumberPixels(offx, offy,
+                         h, h, h,
+                         h, l, h,
+                         h, h, h,
+                         h, l, h,
+                         h, h, h);
+    break;
+    case 9 :
+        drawNumberPixels(offx, offy,
+                         h, h, h,
+                         h, l, h,
+                         h, h, h,
+                         l, l, h,
+                         h, h, h);
+    break;
+    default:
+        drawNumberPixels(offx, offy,
+                         l, l, l,
+                         l, l, l,
+                         l, l, l,
+                         l, l, l,
+                         l, l, l);
+    break;
+    };
+  }
+  void drawNumberPixels(int offx, int offy,
+                        uint8_t p0, uint8_t p1, uint8_t p2,
+                        uint8_t p3, uint8_t p4, uint8_t p5,
+                        uint8_t p6, uint8_t p7, uint8_t p8,
+                        uint8_t p9, uint8_t p10, uint8_t p11,
+                        uint8_t p12, uint8_t p13, uint8_t p14) {
+      canvas()->SetPixel(offx + 0, offy + 0, p0,  p0,  p0);
+      canvas()->SetPixel(offx + 1, offy + 0, p1,  p1,  p1);
+      canvas()->SetPixel(offx + 2, offy + 0, p2,  p2,  p2);
+      canvas()->SetPixel(offx + 0, offy + 1, p3,  p3,  p3);
+      canvas()->SetPixel(offx + 1, offy + 1, p4,  p4,  p4);
+      canvas()->SetPixel(offx + 2, offy + 1, p5,  p5,  p5);
+      canvas()->SetPixel(offx + 0, offy + 2, p6,  p6,  p6);
+      canvas()->SetPixel(offx + 1, offy + 2, p7,  p7,  p7);
+      canvas()->SetPixel(offx + 2, offy + 2, p8,  p8,  p8);
+      canvas()->SetPixel(offx + 0, offy + 3, p9,  p9,  p9);
+      canvas()->SetPixel(offx + 1, offy + 3, p10, p10, p10);
+      canvas()->SetPixel(offx + 2, offy + 3, p11, p11, p11);
+      canvas()->SetPixel(offx + 0, offy + 4, p12, p12, p12);
+      canvas()->SetPixel(offx + 1, offy + 4, p13, p13, p13);
+      canvas()->SetPixel(offx + 2, offy + 4, p14, p14, p14);
+  }
+
+  int delay_ms_;
+};
+
+
+
 /// Genetic Colors
 /// A genetic algorithm to evolve colors
 /// by bbhsu2 + anonymous
@@ -1049,7 +1237,8 @@ static int usage(const char *progname) {
           "\t8  - Langton's ant (-m <time-step-ms>)\n"
           "\t9  - Volume bars (-m <time-step-ms>)\n"
           "\t10 - Evolution of color (-m <time-step-ms>)\n"
-          "\t11 - Brightness pulse generator\n");
+          "\t11 - Brightness pulse generator\n"
+          "\t12 - Fading numbers\n");
   fprintf(stderr, "Example:\n\t%s -D 1 runtext.ppm\n"
           "Scrolls the runtext until Ctrl-C is pressed\n", progname);
   return 1;
@@ -1165,6 +1354,10 @@ int main(int argc, char *argv[]) {
 
   case 11:
     demo_runner = new BrightnessPulseGenerator(matrix);
+    break;
+
+  case 12:
+    demo_runner = new FadingNumberGenerator(matrix);
     break;
   }
 
