@@ -1037,6 +1037,48 @@ private:
 };
 
 
+class MovingColorDotGenerator : public DemoRunner {
+public:
+  MovingColorDotGenerator(Canvas *m, int delay_ms=50)
+    : DemoRunner(m),
+      delay_ms_(delay_ms)
+  {}
+
+  ~MovingColorDotGenerator() {}
+
+  void Run() override {
+    const int width  = canvas()->width();
+    const int height = canvas()->height();
+    const int numpx = width * height;
+    const int numloop = numpx + 5;
+    int idx = 0;
+    int clr = 0;
+    while (!interrupt_received) {
+      for(int x = 0; x < width; ++x)
+      {
+        for(int y = 0; y < height; ++y)
+        {
+          const bool on = (idx >= numpx) || (x == (idx%width) && y == (idx/width));
+          const uint8_t r  = (on && clr == 0 ? 255 : 0);
+          const uint8_t g  = (on && clr == 1 ? 255 : 0);
+          const uint8_t b  = (on && clr == 2 ? 255 : 0);
+          canvas()->SetPixel(x, y, r, g, b);
+        }
+      }
+      //inc
+      ++idx;
+      if(idx >= numloop)
+      {
+          //inc color + reset idx
+          idx = 0;
+          clr = (clr + 1)%3;
+      }
+      usleep(delay_ms_ * 1000);
+    }
+  }
+private:
+  int delay_ms_;
+};
 
 /// Genetic Colors
 /// A genetic algorithm to evolve colors
@@ -1238,7 +1280,8 @@ static int usage(const char *progname) {
           "\t9  - Volume bars (-m <time-step-ms>)\n"
           "\t10 - Evolution of color (-m <time-step-ms>)\n"
           "\t11 - Brightness pulse generator\n"
-          "\t12 - Fading numbers\n");
+          "\t12 - Fading numbers (-m <time-step-ms>)\n"
+          "\t12 - Moving color dot (-m <time-step-ms>)\n");
   fprintf(stderr, "Example:\n\t%s -D 1 runtext.ppm\n"
           "Scrolls the runtext until Ctrl-C is pressed\n", progname);
   return 1;
@@ -1355,9 +1398,13 @@ int main(int argc, char *argv[]) {
   case 11:
     demo_runner = new BrightnessPulseGenerator(matrix);
     break;
-
+    
   case 12:
-    demo_runner = new FadingNumberGenerator(matrix);
+    demo_runner = new FadingNumberGenerator(matrix, scroll_ms);
+    break;
+    
+  case 13:
+    demo_runner = new MovingColorDotGenerator(matrix, scroll_ms);
     break;
   }
 
